@@ -1,4 +1,4 @@
-import os
+import os, re
 
 
 DEBUG = True
@@ -18,26 +18,20 @@ SECRET_KEY = 'secretkey'
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 
-if 'TRAVIS' in os.environ:
-    DATABASES = {
-        'default': {
-            'ENGINE':   'django.db.backends.postgresql_psycopg2',
-            'NAME':     'travisci',
-            'USER':     'postgres',
-            'PASSWORD': '',
-            'HOST':     'localhost',
-            'PORT':     '',
-        }
+# Namespace test database by the tox environment to allow detox to run tests
+# in parallel.
+_ENVNAME = re.sub(r'\W', '', os.environ.get("TOXENV", ""))
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'test%s.db' % _ENVNAME,
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
     }
-else:
-    DATABASES = {
-        'default': {
-            'NAME': 'nonprimary_foreignkey_test_db',
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'USER': 'django',
-            'PASSWORD': 'secret',
-        },
-    }
+}
 
 ROOT_URLCONF = "nonprimary_foreignkey.tests.urls"
 

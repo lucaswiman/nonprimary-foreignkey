@@ -1,0 +1,20 @@
+language: python
+env:
+    - TOX_ENV=py27-1.7
+    - TOX_ENV=py27-1.8
+    - TOX_ENV=py27-1.9
+    - TOX_ENV=py34-1.7
+    - TOX_ENV=py34-1.8
+    - TOX_ENV=py34-1.9
+
+install:
+    - pip install tox --use-mirrors
+
+script:
+    - tox -e $TOX_ENV
+
+after_success:
+    - if [[ $TRAVIS_PYTHON_VERSION != 'pypy' ]]; then pip install coveralls --use-mirrors ; coveralls ; fi
+
+notifications:
+  email: false

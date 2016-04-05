@@ -18,14 +18,26 @@ SECRET_KEY = 'secretkey'
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 
-DATABASES = {
-    'default': {
-        'NAME': 'nonprimary_foreignkey_test_db',
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'USER': 'django',
-        'PASSWORD': 'secret',
-    },
-}
+if 'TRAVIS' in os.environ:
+    DATABASES = {
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql_psycopg2',
+            'NAME':     'travisci',
+            'USER':     'postgres',
+            'PASSWORD': '',
+            'HOST':     'localhost',
+            'PORT':     '',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'NAME': 'nonprimary_foreignkey_test_db',
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'USER': 'django',
+            'PASSWORD': 'secret',
+        },
+    }
 
 ROOT_URLCONF = "nonprimary_foreignkey.tests.urls"
 

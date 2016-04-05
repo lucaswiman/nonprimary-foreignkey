@@ -20,10 +20,10 @@ class NonPrimaryForeignKey(object):
     ``django.contrib.contenttypes`` module.
     """
 
-    def __init__(self, to_model, from_field, to_field):
+    def __init__(self, to_model, from_field, to_field=None):
         self._to_model = to_model
         self._from_field = from_field
-        self._to_field = to_field
+        self._to_field = to_field or from_field  # Default to the fields sharing a name.
         self.editable = False
 
     @cached_property

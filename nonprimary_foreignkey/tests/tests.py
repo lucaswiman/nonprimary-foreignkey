@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from django.test.testcases import TestCase
 from mock import patch
 
+from nonprimary_foreignkey.fields import NonPrimaryForeignKey
 from nonprimary_foreignkey.tests.models import Item
 from nonprimary_foreignkey.tests.models import ItemType
 from nonprimary_foreignkey.tests.models import ReceivedItem
@@ -172,3 +173,7 @@ class TestMisc(TestCase):
         self.assertEqual(ReceivedItem.item.check(), [])
         with patch.object(ReceivedItem.item, 'name', 'foo_'):
             self.assertEqual(len(ReceivedItem.item.check()), 1)
+
+    def test_empty_to_field_default(self):
+        descriptor = NonPrimaryForeignKey('tests.Item', 'barcode')
+        self.assertEqual(descriptor.to_field.attname, 'barcode')

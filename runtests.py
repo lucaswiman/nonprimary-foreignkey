@@ -6,12 +6,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE",
                       "nonprimary_foreignkey.tests.settings")
 
 from django.conf import settings
-
-settings.NOSE_ARGS = [
-    '--with-xunit',
-    '--xunit-file=%s' % os.environ.get('XUNIT_FILE', 'nosetests.xml')
-]
-
 from django_nose import NoseTestSuiteRunner
 
 

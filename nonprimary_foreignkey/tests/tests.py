@@ -1,7 +1,9 @@
+from django.db.models import Prefetch
 from django.test.testcases import TestCase
 from mock import patch
 
 from nonprimary_foreignkey.tests.models import Item
+from nonprimary_foreignkey.tests.models import ItemType
 from nonprimary_foreignkey.tests.models import ReceivedItem
 
 
@@ -130,12 +132,36 @@ class TestPrefetch(TestCase):
         self.assertEqual(
             ReceivedItem.objects.create(barcode=self.barcode1).item,
             self.item1)
-        [item] = ReceivedItem.objects.prefetch_related('item').all()
+        [item] = ReceivedItem.objects.prefetch_related('item')
         with self.assertNumQueries(0):
             self.assertEqual(item.item, self.item1)
         item.item = self.item2
         with self.assertNumQueries(0):
             self.assertEqual(item.item, self.item2)
+
+    def test_prefetch_custom_queryset(self):
+        self.item1.item_type = ItemType.objects.create()
+        self.item1.save()
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=self.barcode1).item,
+            self.item1)
+        with self.assertNumQueries(2):
+            [item] = ReceivedItem.objects.prefetch_related(
+                Prefetch('item', queryset=Item.objects.select_related('item_type')))
+        with self.assertNumQueries(0):
+            self.assertEqual(item.item.item_type, self.item1.item_type)
+
+    def test_prefetch_multiple_levels(self):
+        self.item1.relateditem_set.create()
+        self.item1.relateditem_set.create()
+        self.item1.relateditem_set.create()
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=self.barcode1).item,
+            self.item1)
+        with self.assertNumQueries(3):
+            [item] = ReceivedItem.objects.prefetch_related('item__relateditem_set')
+        with self.assertNumQueries(0):
+            self.assertEqual(len(item.item.relateditem_set.all()), 3)
 
 
 class TestMisc(TestCase):

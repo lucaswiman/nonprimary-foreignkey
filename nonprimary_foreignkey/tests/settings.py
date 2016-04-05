@@ -6,7 +6,6 @@ DEBUG = True
 
 INSTALLED_APPS = (
     'nonprimary_foreignkey.tests',
-    'nonprimary_foreignkey',
     'django_nose',
     'django.contrib.staticfiles',
     'django.contrib.sessions',

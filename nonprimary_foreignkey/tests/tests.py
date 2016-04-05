@@ -78,3 +78,16 @@ class TestPrefetch(TestCase):
             self.assertEqual(len(queryset), 2)
         with self.assertNumQueries(0):
             self.assertEqual({obj.item for obj in queryset}, {self.item1, self.item2})
+
+    def test_null(self):
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=None).item,
+            None)
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=self.barcode1).item,
+            self.item1)
+        with self.assertNumQueries(2):
+            queryset = ReceivedItem.objects.prefetch_related('item')
+            self.assertEqual(len(queryset), 2)
+        with self.assertNumQueries(0):
+            self.assertEqual({obj.item for obj in queryset}, {self.item1, None})

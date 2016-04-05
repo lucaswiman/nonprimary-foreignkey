@@ -35,7 +35,6 @@ class NonPrimaryForeignKey(object):
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self
-
         try:
             return getattr(instance, self.cache_name)
         except AttributeError:

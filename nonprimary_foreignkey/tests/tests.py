@@ -100,6 +100,17 @@ class TestPrefetch(TestCase):
         with self.assertNumQueries(0):
             self.assertEqual({obj.item for obj in queryset}, {self.item1, None})
 
+    def test_set_with_prefetched_object(self):
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=self.barcode1).item,
+            self.item1)
+        [item] = ReceivedItem.objects.prefetch_related('item').all()
+        with self.assertNumQueries(0):
+            self.assertEqual(item.item, self.item1)
+        with self.assertNumQueries(1):
+            item.barcode = self.item2.barcode
+            self.assertEqual(item.item, self.item2)
+
 
 class TestMisc(TestCase):
     def test_str(self):

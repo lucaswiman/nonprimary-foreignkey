@@ -1,4 +1,6 @@
 from django.test.testcases import TestCase
+from mock import patch
+
 from nonprimary_foreignkey.tests.models import Item
 from nonprimary_foreignkey.tests.models import ReceivedItem
 
@@ -27,6 +29,11 @@ class TestGet(TestCase):
         with self.assertRaises(Item.MultipleObjectsReturned):
             from_instance.item
 
+    def test_get_underlying_field_null(self):
+        from_instance = ReceivedItem.objects.create()
+        self.assertEqual(from_instance.barcode, None)
+        self.assertEqual(from_instance.item, None)
+
 
 class TestSet(TestCase):
     def setUp(self):
@@ -49,10 +56,11 @@ class TestSet(TestCase):
         self.assertEqual(from_instance.item, None)
         self.assertEqual(from_instance.barcode, None)
 
-    def test_set_underlying_field_null(self):
+    def test_wrong_type(self):
         from_instance = ReceivedItem.objects.create()
         self.assertEqual(from_instance.barcode, None)
-        self.assertEqual(from_instance.item, None)
+        with self.assertRaises(TypeError):
+            from_instance.item = object()
 
 
 class TestPrefetch(TestCase):
@@ -91,3 +99,13 @@ class TestPrefetch(TestCase):
             self.assertEqual(len(queryset), 2)
         with self.assertNumQueries(0):
             self.assertEqual({obj.item for obj in queryset}, {self.item1, None})
+
+
+class TestMisc(TestCase):
+    def test_str(self):
+        self.assertEqual(str(ReceivedItem.item), 'tests.ReceivedItem.item')
+
+    def test_check(self):
+        self.assertEqual(ReceivedItem.item.check(), [])
+        with patch.object(ReceivedItem.item, 'name', 'foo_'):
+            self.assertEqual(len(ReceivedItem.item.check()), 1)

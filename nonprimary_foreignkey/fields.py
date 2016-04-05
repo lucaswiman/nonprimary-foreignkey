@@ -29,7 +29,7 @@ class NonPrimaryForeignKey(object):
     def contribute_to_class(self, cls, name):
         self.name = name
         self.model = cls
-        self.cache_attr = "_%s_cache" % name
+        self.cache_name = "_%s_cache" % name
         setattr(cls, name, self)
 
     def __get__(self, instance, instance_type=None):
@@ -37,7 +37,7 @@ class NonPrimaryForeignKey(object):
             return self
 
         try:
-            return getattr(instance, self.cache_attr)
+            return getattr(instance, self.cache_name)
         except AttributeError:
             rel_obj = None
             f = self.model._meta.get_field(self.from_field)
@@ -46,7 +46,7 @@ class NonPrimaryForeignKey(object):
                 return None
             rel_obj = self.to_model._default_manager.get(
                 **{self.to_field: value})
-            setattr(instance, self.cache_attr, rel_obj)
+            setattr(instance, self.cache_name, rel_obj)
             return rel_obj
 
     def __set__(self, instance, value):
@@ -55,7 +55,7 @@ class NonPrimaryForeignKey(object):
         to_f = self.to_model._meta.get_field(self.to_field)
         f = self.model._meta.get_field(self.from_field)
         set_value = getattr(value, to_f.get_attname(), None)
-        setattr(instance, self.cache_attr, value)
+        setattr(instance, self.cache_name, value)
         setattr(instance, f.get_attname(), set_value)
 
     def __str__(self):
@@ -76,5 +76,23 @@ class NonPrimaryForeignKey(object):
             )
         return errors
 
+    def is_cached(self, instance):
+        # Called in prefetching.
+        return hasattr(instance, self.cache_name)
+
     def get_prefetch_queryset(self, instances, queryset=None):
-        raise NotImplementedError()
+        """
+        Prefetches for the given instances.
+
+        Based on the implementation in ``ReverseSingleRelatedObjectDescriptor``.
+        """
+        f = self.model._meta.get_field(self.from_field)
+        to_f = self.to_model._meta.get_field(self.to_field)
+        values = [
+            getattr(instance, f.get_attname(), None) for instance in instances
+            if getattr(instance, f.get_attname(), None) is not None]
+        queryset = (queryset or self.to_model._default_manager).filter(**{
+            '%s__in' % self.to_field: values})
+        rel_obj_attr = lambda rel_obj: (getattr(rel_obj, to_f.attname), )
+        instance_attr = lambda obj: (getattr(obj, f.attname), )
+        return queryset, rel_obj_attr, instance_attr, True, self.cache_name

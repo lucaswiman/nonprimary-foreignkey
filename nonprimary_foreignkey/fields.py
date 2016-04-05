@@ -103,8 +103,9 @@ class NonPrimaryForeignKey(object):
         values = [
             getattr(instance, self.from_field.attname, None) for instance in instances
             if getattr(instance, self.from_field.attname, None) is not None]
-        queryset = (queryset or self.to_model._default_manager).filter(**{
-            '%s__in' % self.to_field.attname: values})
+        if queryset is None:
+            queryset = self.to_model._default_manager
+        queryset = queryset.filter(**{'%s__in' % self.to_field.attname: values})
         rel_obj_attr = lambda rel_obj: (getattr(rel_obj, self.to_field.attname), )
         instance_attr = lambda obj: (getattr(obj, self.from_field.attname), )
         return queryset, rel_obj_attr, instance_attr, True, self.cache_name

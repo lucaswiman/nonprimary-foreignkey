@@ -21,3 +21,5 @@ test.db
 .venv
 version.py
 build/
+versioning
+.eggs

@@ -1,5 +1,6 @@
 import django
 from django.core import checks
+from django.utils.functional import cached_property
 
 if django.VERSION < (1, 8):
     from django.db.models.loading import get_model
@@ -18,13 +19,21 @@ class NonPrimaryForeignKey(object):
 
     def __init__(self, to_model, from_field, to_field):
         self._to_model = to_model
-        self.from_field = from_field
-        self.to_field = to_field
+        self._from_field = from_field
+        self._to_field = to_field
         self.editable = False
 
-    @property
+    @cached_property
     def to_model(self):
         return get_model(self._to_model)
+
+    @cached_property
+    def to_field(self):
+        return self.to_model._meta.get_field(self._to_field)
+
+    @cached_property
+    def from_field(self):
+        return self.model._meta.get_field(self._from_field)
 
     def contribute_to_class(self, cls, name):
         self.name = name
@@ -39,23 +48,20 @@ class NonPrimaryForeignKey(object):
             return getattr(instance, self.cache_name)
         except AttributeError:
             rel_obj = None
-            f = self.model._meta.get_field(self.from_field)
-            value = getattr(instance, f.get_attname(), None)
+            value = getattr(instance, self.from_field.attname, None)
             if value is None:
                 return None
             rel_obj = self.to_model._default_manager.get(
-                **{self.to_field: value})
+                **{self.to_field.attname: value})
             setattr(instance, self.cache_name, rel_obj)
             return rel_obj
 
     def __set__(self, instance, value):
         if not (value is None or isinstance(value, self.to_model)):
             raise TypeError('%r must is not a %s' % (value, self.to_model))
-        to_f = self.to_model._meta.get_field(self.to_field)
-        f = self.model._meta.get_field(self.from_field)
-        set_value = getattr(value, to_f.get_attname(), None)
+        set_value = getattr(value, self.to_field.attname, None)
         setattr(instance, self.cache_name, value)
-        setattr(instance, f.get_attname(), set_value)
+        setattr(instance, self.from_field.attname, set_value)
 
     def __str__(self):
         model = self.model
@@ -85,13 +91,11 @@ class NonPrimaryForeignKey(object):
 
         Based on the implementation in ``ReverseSingleRelatedObjectDescriptor``.
         """
-        f = self.model._meta.get_field(self.from_field)
-        to_f = self.to_model._meta.get_field(self.to_field)
         values = [
-            getattr(instance, f.get_attname(), None) for instance in instances
-            if getattr(instance, f.get_attname(), None) is not None]
+            getattr(instance, self.from_field.attname, None) for instance in instances
+            if getattr(instance, self.from_field.attname, None) is not None]
         queryset = (queryset or self.to_model._default_manager).filter(**{
-            '%s__in' % self.to_field: values})
-        rel_obj_attr = lambda rel_obj: (getattr(rel_obj, to_f.attname), )
-        instance_attr = lambda obj: (getattr(obj, f.attname), )
+            '%s__in' % self.to_field.attname: values})
+        rel_obj_attr = lambda rel_obj: (getattr(rel_obj, self.to_field.attname), )
+        instance_attr = lambda obj: (getattr(obj, self.from_field.attname), )
         return queryset, rel_obj_attr, instance_attr, True, self.cache_name

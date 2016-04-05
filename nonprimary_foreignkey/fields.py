@@ -51,13 +51,10 @@ class NonPrimaryForeignKey(object):
         value = getattr(instance, self.from_field.attname, None)
         if value is None:
             return None
-        try:
-            cached = getattr(instance, self.cache_name)
-        except AttributeError:
-            cached = UNDEFINED
-        if cached is not UNDEFINED:
-            if getattr(cached, self.to_field.attname, None) == value:
-                return cached
+        cached = getattr(instance, self.cache_name, UNDEFINED)
+
+        if cached is not UNDEFINED and getattr(cached, self.to_field.attname, None) == value:
+            return cached
 
         rel_obj = None
         rel_obj = self.to_model._default_manager.get(

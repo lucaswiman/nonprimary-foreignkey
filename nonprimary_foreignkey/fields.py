@@ -9,6 +9,9 @@ else:
     get_model = apps.get_model
 
 
+UNDEFINED = object()
+
+
 class NonPrimaryForeignKey(object):
     """
     Descriptor class for handling non-primary foreign keys.
@@ -44,17 +47,23 @@ class NonPrimaryForeignKey(object):
     def __get__(self, instance, instance_type=None):
         if instance is None:
             return self
+
+        value = getattr(instance, self.from_field.attname, None)
+        if value is None:
+            return None
         try:
-            return getattr(instance, self.cache_name)
+            cached = getattr(instance, self.cache_name)
         except AttributeError:
-            rel_obj = None
-            value = getattr(instance, self.from_field.attname, None)
-            if value is None:
-                return None
-            rel_obj = self.to_model._default_manager.get(
-                **{self.to_field.attname: value})
-            setattr(instance, self.cache_name, rel_obj)
-            return rel_obj
+            cached = UNDEFINED
+        if cached is not UNDEFINED:
+            if getattr(cached, self.to_field.attname, None) == value:
+                return cached
+
+        rel_obj = None
+        rel_obj = self.to_model._default_manager.get(
+            **{self.to_field.attname: value})
+        setattr(instance, self.cache_name, rel_obj)
+        return rel_obj
 
     def __set__(self, instance, value):
         if not (value is None or isinstance(value, self.to_model)):

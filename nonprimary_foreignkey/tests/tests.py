@@ -10,6 +10,8 @@ class TestGet(TestCase):
         Item.objects.all().delete()
         self.barcode = '12345'
         self.item = Item.objects.create(barcode=self.barcode)
+        self.barcode2 = '67890'
+        self.item2 = Item.objects.create(barcode=self.barcode2)
 
     def test_get(self):
         from_instance = ReceivedItem.objects.create()
@@ -33,6 +35,19 @@ class TestGet(TestCase):
         from_instance = ReceivedItem.objects.create()
         self.assertEqual(from_instance.barcode, None)
         self.assertEqual(from_instance.item, None)
+
+    def test_get_cache_behavior(self):
+        from_instance = ReceivedItem.objects.create()
+        from_instance.barcode = self.barcode
+        with self.assertNumQueries(1):
+            self.assertEqual(from_instance.item, self.item)
+        with self.assertNumQueries(0):
+            self.assertEqual(from_instance.item, self.item)
+
+        # Invalidate the cache by setting the underlying field.
+        from_instance.barcode = self.barcode2
+        with self.assertNumQueries(1):
+            self.assertEqual(from_instance.item, self.item2)
 
 
 class TestSet(TestCase):
@@ -100,7 +115,7 @@ class TestPrefetch(TestCase):
         with self.assertNumQueries(0):
             self.assertEqual({obj.item for obj in queryset}, {self.item1, None})
 
-    def test_set_with_prefetched_object(self):
+    def test_set_underlying_field_with_prefetched_object(self):
         self.assertEqual(
             ReceivedItem.objects.create(barcode=self.barcode1).item,
             self.item1)
@@ -109,6 +124,17 @@ class TestPrefetch(TestCase):
             self.assertEqual(item.item, self.item1)
         with self.assertNumQueries(1):
             item.barcode = self.item2.barcode
+            self.assertEqual(item.item, self.item2)
+
+    def test_set_with_prefetched_object(self):
+        self.assertEqual(
+            ReceivedItem.objects.create(barcode=self.barcode1).item,
+            self.item1)
+        [item] = ReceivedItem.objects.prefetch_related('item').all()
+        with self.assertNumQueries(0):
+            self.assertEqual(item.item, self.item1)
+        item.item = self.item2
+        with self.assertNumQueries(0):
             self.assertEqual(item.item, self.item2)
 
 

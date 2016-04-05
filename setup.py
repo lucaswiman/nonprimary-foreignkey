@@ -4,7 +4,6 @@ from setuptools import setup
 from pip.req import parse_requirements
 from pip.download import PipSession
 
-from version import __version__
 
 
 def read_file(filename):
@@ -25,7 +24,6 @@ test_requirements = (
 
 setup(
     name='nonprimary-foreignkey',
-    version=__version__,
     author='Lucas Wiman',
     author_email='lucas.wiman@gmail.com',
     packages=['nonprimary_foreignkey'],

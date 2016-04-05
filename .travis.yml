@@ -1,20 +1,24 @@
 language: python
 env:
-    - TOX_ENV=py27-1.7
-    - TOX_ENV=py27-1.8
-    - TOX_ENV=py27-1.9
-    - TOX_ENV=py34-1.7
-    - TOX_ENV=py34-1.8
-    - TOX_ENV=py34-1.9
-
+- TOX_ENV=py27-1.7
+- TOX_ENV=py27-1.8
+- TOX_ENV=py27-1.9
+- TOX_ENV=py34-1.7
+- TOX_ENV=py34-1.8
+- TOX_ENV=py34-1.9
 install:
-    - pip install tox --use-mirrors
-
+- pip install tox --use-mirrors
 script:
-    - tox -e $TOX_ENV
-
+- tox -e $TOX_ENV
 after_success:
-    - if [[ $TRAVIS_PYTHON_VERSION != 'pypy' ]]; then pip install coveralls --use-mirrors ; coveralls ; fi
-
+- if [[ $TRAVIS_PYTHON_VERSION != 'pypy' ]]; then pip install coveralls --use-mirrors
+  ; coveralls ; fi
 notifications:
   email: false
+deploy:
+  provider: pypi
+  user: lucaswiman
+  password:
+    secure: x7ghy16Sx0z8puVQyyaXUtBd2Z93vMgOOJpxhQ1W4BniZdXx4nnDXel72nIGIJRdcoKE6sznclVYJ16qNzIc2VyOZ22hmlR/VKxj/mysTHuOVRjRUUdFs/8b9ItzshluYmZ2w/SUm1iq2jlluvEhPJRTZT4u2YqQvxkX4FwJimYe/9jywbYzZ02PXpv66LI98Jzd1MayCvcd806/Zoo57rZtZMMm80tK0KXN+NKl//C5tEUkE8Jl6+qXT7KWPg2+gQvde1CyosthNL3E4tpVdxACY7EhMkfSuRSBKJT169L7I5ou3HJfV6gPQw1Cq3srqPahCrhHeKGdFkGdNwSCoxFt4PGramOCpIH0fzpPcsFiHz4gq5SW6sqUfijgkss9//nlFym6UEqkfNs+zLxqBSng6QqNnRlLE6G6ZK88Ps0aRKOPQmof4oYKd1/MRQuh2H6YLHiapFjvERNQCn3HyNoZZwYfJtObg1KztsaI/0yxKlrHBja0mLKvNzeu8TZUNgHCXGkE43ZcFebxh2imDsVA8b7izSosOtuVfMeeCa0yuv0gAXBgxUfQ/YE9vEAQZqmDA9dgvePkipO71pzwyBrSCG49dvE9LLNZI6M/zvD3i7AH8CeFOPy5CFMiXUIFqhhDFHQbDgF/56I5numH4sIXZf0K26gYJFWF4sR88SA=
+  on:
+    tags: true

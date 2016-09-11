@@ -13,7 +13,8 @@ dist/*
 *.log
 nosetests*.xml
 
-.coverage*
+.coverage
+.cache
 coverage.xml
 coverage
 

@@ -6,7 +6,6 @@ DEBUG = True
 
 INSTALLED_APPS = (
     'nonprimary_foreignkey.tests',
-    'django_nose',
     'django.contrib.staticfiles',
     'django.contrib.sessions',
     'django.contrib.contenttypes',
@@ -43,8 +42,6 @@ STATIC_FILE_FINDERS = (
 )
 
 STATIC_URL = '/static/'
-
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

@@ -1,12 +1,6 @@
-import django
+from django.apps import apps
 from django.core import checks
 from django.utils.functional import cached_property
-
-if django.VERSION < (1, 8):
-    from django.db.models.loading import get_model
-else:
-    from django.apps import apps
-    get_model = apps.get_model
 
 
 UNDEFINED = object()
@@ -28,7 +22,7 @@ class NonPrimaryForeignKey(object):
 
     @cached_property
     def to_model(self):
-        return get_model(self._to_model)
+        return apps.get_model(self._to_model)
 
     @cached_property
     def to_field(self):
